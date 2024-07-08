@@ -9,6 +9,6 @@ RSpec.describe Suburb, type: :model do
 	end
 	it 'can set itself up' do
 		@burb.setup_search(@burb.domain_tag)
-		require 'pry'; binding.pry
+		expect(@burb.properties.count).to eq(20)
 	end
 end

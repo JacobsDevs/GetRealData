@@ -14,4 +14,9 @@ class Property < ApplicationRecord
 			)
 		end
 	end
+
+	def get_description_from_link
+		scrape = Scraper.new
+		update!(description: scrape.property_description(link))
+	end
 end

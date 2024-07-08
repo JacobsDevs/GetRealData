@@ -14,4 +14,12 @@ RSpec.describe Property, type: :model do
 
 		expect(@burb.properties.count).to eq(4)
 	end
+	it 'can get description from link' do
+		@burb.properties.build_from_page_data(@data)
+
+		property = @burb.properties.last
+		property.get_description_from_link
+		
+		expect(@burb.properties.last.description).to include("Banksia")
+	end
 end

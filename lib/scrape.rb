@@ -108,4 +108,12 @@ class Scraper
 		@browser.quit
 		return @props
 	end
+
+	def property_description(link)
+		browser = Ferrum::Browser.new
+		browser.go_to(link)
+		browser.network.wait_for_idle
+		browser.at_css('div.css-14y7q63 > button').focus.click
+		return  browser.at_css('#__next > div > div.css-1ktrj7 > div > div.css-4bd6g2 > div > div > div.css-bq4jj8').text
+	end
 end
