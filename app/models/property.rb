@@ -49,6 +49,8 @@ class Property < ApplicationRecord
 		if prices.size > 1
 			update!(low_price: prices[0])
 			update!(high_price: prices[1])
+		elsif prices.size == 1
+			update!(single_price: prices[0])
 		end
 	end
 end

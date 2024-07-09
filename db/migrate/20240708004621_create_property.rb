@@ -11,6 +11,7 @@ class CreateProperty < ActiveRecord::Migration[7.1]
       t.string :price
       t.integer :high_price
       t.integer :low_price
+			t.integer :single_price
 
       t.timestamps
     end
