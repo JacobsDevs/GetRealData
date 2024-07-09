@@ -19,4 +19,36 @@ class Property < ApplicationRecord
 		scrape = Scraper.new
 		update!(description: scrape.property_description(link))
 	end
+
+	def process_price
+		strip_price = price.gsub(' ', '')
+		prices = []
+		prices << scan_million(strip_price)
+		prices << scan_hundred_thousand(strip_price)
+		prices << scan_ten_thousand(strip_price)
+		prices.flatten!.each do |i|
+			i.gsub!(',', '')
+			i.gsub!('$', '')
+		end
+		set_prices(prices.map(&:to_i).sort)
+	end
+
+	def scan_ten_thousand(string)
+		string.scan(/\$\d{2},\d{3}/)
+	end
+
+	def scan_hundred_thousand(string)
+		string.scan(/\$\d{3},\d{3}/)
+	end
+
+	def scan_million(string)
+		string.scan(/\$\d{1},\d{3},\d{3}/)
+	end
+
+	def set_prices(prices)
+		if prices.size > 1
+			update!(low_price: prices[0])
+			update!(high_price: prices[1])
+		end
+	end
 end

@@ -103,7 +103,7 @@ class Scraper
 				@props = @props.merge(a)
 			end
 			@counter += 1
-			@finished = true #remove to debug
+			#@finished = true #remove to debug
 		end
 		@browser.quit
 		return @props

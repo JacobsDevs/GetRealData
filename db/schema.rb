@@ -23,8 +23,8 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_08_022743) do
     t.string "land"
     t.string "description"
     t.string "price"
-    t.string "high_price"
-    t.string "low_price"
+    t.integer "high_price"
+    t.integer "low_price"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "suburb_id", null: false

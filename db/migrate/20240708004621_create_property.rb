@@ -9,8 +9,8 @@ class CreateProperty < ActiveRecord::Migration[7.1]
       t.string :land
       t.string :description
       t.string :price
-      t.string :high_price
-      t.string :low_price
+      t.integer :high_price
+      t.integer :low_price
 
       t.timestamps
     end
