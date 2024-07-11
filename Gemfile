@@ -74,3 +74,7 @@ gem "sidekiq", "~> 7.3"
 gem "devise", "~> 4.9"
 
 gem "rspec-rails", "~> 6.1"
+
+gem "capybara", "~> 3.40"
+
+gem "launchy", "~> 3.0"

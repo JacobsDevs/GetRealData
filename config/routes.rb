@@ -5,6 +5,10 @@ Rails.application.routes.draw do
 		mount Sidekiq::Web => '/sidekiq'
 	end
 	root 'pages#home'
+
+	resources :suburbs, controller: 'suburbs' do
+		resources :properties, controller: 'suburbs/properties'
+	end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

@@ -1,0 +1,7 @@
+<%= form_with url: suburbs_path, method: :post, local: true do |f| %>
+<%= f.label :name %>
+<%= f.text_field :name %>
+<%= f.label :postcode %>
+<%= f.text_field :postcode %>
+<%= f.submit "Create Suburb"%>
+<% end %>
