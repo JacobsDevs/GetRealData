@@ -3,15 +3,22 @@ class Property < ApplicationRecord
 
 	def self.build_from_page_data(data)
 		data.each do |prop|
-			self.create!(
-				link: prop[0],
-				address: prop[1]['address'],
-				beds: prop[1]['beds'],
-				baths: prop[1]['baths'],
-				cars: prop[1]['cars'],
-				land: prop[1]['land'],
-				price: prop[1]['price']
-			)
+			if Property.where(link: prop[0]).count == 0
+				i = self.create!(
+					link: prop[0],
+					address: prop[1]['address'],
+					beds: prop[1]['beds'],
+					baths: prop[1]['baths'],
+					cars: prop[1]['cars'],
+					land: prop[1]['land'],
+					price: prop[1]['price']
+				)
+				i.process_price
+				i.get_description_from_link
+				puts ("Processed #{i.address}")
+			else
+				puts "Already Present #{prop[0]}"
+			end
 		end
 	end
 
