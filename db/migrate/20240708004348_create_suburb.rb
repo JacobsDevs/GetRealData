@@ -4,6 +4,7 @@ class CreateSuburb < ActiveRecord::Migration[7.1]
       t.string :name
 			t.string :postcode
       t.string :domain_tag
+			t.boolean :processing
 
       t.timestamps
     end

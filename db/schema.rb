@@ -36,6 +36,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_07_08_022743) do
     t.string "name"
     t.string "postcode"
     t.string "domain_tag"
+    t.boolean "processing"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

@@ -1,7 +1,7 @@
 class Property < ApplicationRecord
 	belongs_to :suburb
 
-	def self.build_from_page_data(data)
+	def self.build_from_page_data(data, browser)
 		data.each do |prop|
 			if Property.where(link: prop[0]).count == 0
 				i = self.create!(
@@ -14,7 +14,7 @@ class Property < ApplicationRecord
 					price: prop[1]['price']
 				)
 				i.process_price
-				i.get_description_from_link
+				i.get_description_from_link(browser)
 				puts ("Processed #{i.address}")
 			else
 				puts "Already Present #{prop[0]}"
@@ -22,9 +22,9 @@ class Property < ApplicationRecord
 		end
 	end
 
-	def get_description_from_link
+	def get_description_from_link(browser)
 		scrape = Scraper.new
-		update!(description: scrape.property_description(link))
+		update!(description: scrape.property_description(link, browser))
 	end
 
 	def process_price

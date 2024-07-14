@@ -61,13 +61,13 @@ class Scraper
 		until @page_finished do 
 			puts "page #{@counter} grabbing #{@c}"
 			retries = 0
-			begin
-				if @browser.at_xpath("/html/body/div[1]/div/div[2]/div[4]/div[2]/div[1]/div[2]/div[2]/h3")
-					if @browser.at_xpath("/html/body/div[1]/div/div[2]/div[4]/div[2]/div[1]/div[2]/div[2]/h3").text == "No exact matches"
-						@finished = true
-						break
-					end
+			if @browser.at_xpath("/html/body/div[1]/div/div[2]/div[4]/div[2]/div[1]/div[2]/div[2]/h3")
+				if @browser.at_xpath("/html/body/div[1]/div/div[2]/div[4]/div[2]/div[1]/div[2]/div[2]/h3").text == "No exact matches"
+					@finished = true
+					break
 				end
+			end
+			begin
 				if @browser.at_xpath("#{@list}#{item(@c)}")
 					li = @browser.at_xpath("#{@list}#{item(@c)}")
 					if li && li.at_xpath(@link_loc)
@@ -96,14 +96,14 @@ class Scraper
 	end
 	
 	def build_url(suburb)
-		base = "https://www.domain.com.au/sale/#{suburb}/?excludeunderoffer=1&ssubs=0&page=#{@counter}"
+		base = "https://www.domain.com.au/sale/#{suburb}/?ptype=duplex,free-standing,semi-detached&excludeunderoffer=1&ssubs=0&page=#{@counter}"
 		# 'excludeunderoffer=1&ssubs=0&'
 		return base
 	end
 	
-	def process_request(domain_suburb)
+	def process_request(domain_suburb, browser)
 		@props = {}
-		@browser = Ferrum::Browser.new
+		@browser = browser
 		@counter = 1
 		@finished = false
 		until @finished do
@@ -113,27 +113,91 @@ class Scraper
 				@props = @props.merge(a)
 			end
 			@counter += 1
-			@finished = true #remove to debug
 		end
-		@browser.quit
 		return @props
 	end
 
-	def property_description(link)
+	def property_description(link, browser)
 		retry_count = 0
-		browser = Ferrum::Browser.new
 		begin
 			browser.go_to(link)
-			sleep 1
-			browser.at_css('div.css-14y7q63 > button').focus.click
+			if browser.at_css('div.css-14y7q63 > button')
+				browser.at_css('div.css-14y7q63 > button').focus.click
+			end 
 			description = browser.at_css('#__next > div > div.css-1ktrj7 > div > div.css-4bd6g2 > div > div > div.css-bq4jj8').text
-			browser.quit
 		rescue
 			retry_count += 1
 			puts "Unable to get description #{link}, retrying #{retry_count} time"
-			retry if retry_count < 5
+			retry if retry_count < 10
 		end
 		
 		return description  
 	end
+
+	def get_browser
+		browser = Ferrum::Browser.new(headless: false, 'no-sandbox' => false)
+    browser.options.extensions.append('0.13.4_0.crx')
+		return browser
+	end
+
+  def get_selenium
+    options = Selenium::WebDriver::Chrome::Options.new
+    options.add_extension('0.13.4_0.crx')
+    options.add_extension('1.58.0_0.crx')
+    options.args << 'headless=new'
+    a = Selenium::WebDriver.for :chrome, options: options
+    return a
+  end
+  
+  def pull_suburb(browser, suburb_tag)
+    @counter = 1
+    @property_list = {}
+    @suburb_complete = false
+    @browser = browser
+    @browser.navigate.to(build_url(suburb_tag))
+    until @suburb_complete do
+      rip_suburb
+    end
+  end
+  
+  def rip_suburb
+    puts @counter
+    fininshed_page = false
+    slug_count = 1
+    if @browser.find_elements(css: '#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > div.css-18vn4hf').count >= 1
+      puts "Oopsiiiiie "
+    end
+    until fininshed_page
+      begin
+        if @browser.find_element(css: "#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li:nth-child(#{slug_count})").displayed?
+          slug = @browser.find_element(css: "#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li:nth-child(#{slug_count})")
+          puts("processing #{slug_count}")
+          link = find_link(slug)
+          @property_list[link] = {}
+          entry = @property_list[link]
+          slug_count += 1        
+        else
+          puts slug_count
+          if @browser.find_element(css: "#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li:nth-child(#{slug_count})").attribute('class') == "css-5l9b9m"
+            slug_count += 1 
+          end
+        end
+      rescue Exception => e
+        if e.to_s.include?('no such element')
+          fininshed_page = true
+          @counter += 1
+          puts "DONE"
+          return
+        else
+          retry
+        end
+      end
+    end
+  end
+  
+  def find_link(slug)
+    if slug.attribute('class') != "css-5l9b9m"
+      slug.find_element(tag_name: 'a').attribute('href')
+    end
+  end
 end

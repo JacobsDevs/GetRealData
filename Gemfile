@@ -78,3 +78,5 @@ gem "rspec-rails", "~> 6.1"
 gem "capybara", "~> 3.40"
 
 gem "launchy", "~> 3.0"
+
+gem "selenium-webdriver", "~> 4.22"
