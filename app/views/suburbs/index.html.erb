@@ -2,7 +2,7 @@
 	<h1><%= "Name: " %><%= link_to burb.name, suburb_path(burb.id) %> </h1>
 	<p><%= burb.domain_tag %></p>
 	<p><%= burb.properties.count %></p>
-	<%= link_to "Setup Suburb"%>
+	<%= link_to "Setup Suburb", setup_suburb_path(burb.id), data: {turbo_method: :post}, remote: true%>
 <% end %>
 
 <%= link_to 'New Suburb', new_suburb_path %>
