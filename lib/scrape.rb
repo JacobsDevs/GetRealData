@@ -156,22 +156,18 @@ class Scraper
     @browser = browser
     @browser.navigate.to(build_url(suburb_tag))
     until @suburb_complete do
-      rip_suburb
+      process_page
     end
     require 'pry'; binding.pry
   end
   
-  def rip_suburb
+  def process_page
     last = @browser.find_elements(css: '#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li').count < 23
     elements = @browser.find_elements(css: '#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li')
     elements.each_with_index do |i, idx|
       @property_list[i.find_element(css: 'a').attribute('href')] = {info: get_info(i), address: get_clean_address(i), specs: get_specs(i)} if is_listing?(i)
     end
-    if !last
-      @browser.navigate.to "#{@browser.find_elements(class: 'css-xixru3').last.attribute('href')}"
-    else
-      @suburb_complete = true
-    end
+    next_page(last)
   end
 
   def is_listing?(element)
@@ -200,12 +196,12 @@ class Scraper
     specs = element.find_elements(css: "div > div.css-1gkcyyc > div > div.css-1t41ar7 > div.css-k1qq7e > div > span").map(&:text)
     return specs.each {|i| i.gsub!("\n", " ")}
   end
-  
-#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li.is-first-in-list.css-1qp9106 > div > div.css-1n74r2t > div > div.css-9hd67m
 
-  def find_link(slug)
-    if slug.attribute('class') != "css-5l9b9m"
-      slug.find_element(tag_name: 'a').attribute('href')
+  def next_page(last)
+    if !last
+      @browser.navigate.to "#{@browser.find_elements(class: 'css-xixru3').last.attribute('href')}"
+    else
+      @suburb_complete = true
     end
   end
 end
