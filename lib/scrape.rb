@@ -158,43 +158,41 @@ class Scraper
     until @suburb_complete do
       rip_suburb
     end
+    require 'pry'; binding.pry
   end
   
   def rip_suburb
-    puts @counter
-    fininshed_page = false
-    slug_count = 1
-    if @browser.find_elements(css: '#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > div.css-18vn4hf').count >= 1
-      puts "Oopsiiiiie "
-    end
-    until fininshed_page
-      begin
-        if @browser.find_element(css: "#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li:nth-child(#{slug_count})").displayed?
-          slug = @browser.find_element(css: "#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li:nth-child(#{slug_count})")
-          puts("processing #{slug_count}")
-          link = find_link(slug)
-          @property_list[link] = {}
-          entry = @property_list[link]
-          slug_count += 1        
-        else
-          puts slug_count
-          if @browser.find_element(css: "#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li:nth-child(#{slug_count})").attribute('class') == "css-5l9b9m"
-            slug_count += 1 
+    last = false
+    elements = @browser.find_elements(css: '#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li')
+    last = true if @browser.find_elements(css: '#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li').count < 23
+    elements.each_with_index do |i, idx|
+      valid_string = false
+      if i.attribute('class').include?('css-1qp9106')
+        until valid_string
+          string = []
+          i.find_elements(css: 'p').each { |i| string << i.text }
+          if !string.join.include?('Loading')
+            valid_string = true
+          else
+            sleep(1)
           end
         end
-      rescue Exception => e
-        if e.to_s.include?('no such element')
-          fininshed_page = true
-          @counter += 1
-          puts "DONE"
-          return
-        else
-          retry
-        end
+        @property_list[i.find_element(css: 'a').attribute('href')] = {info: string, address: get_clean_address(i)}
       end
     end
+    if !last
+      @browser.navigate.to "#{@browser.find_elements(class: 'css-xixru3').last.attribute('href')}"
+    else
+      @suburb_complete = true
+    end
+  end
+
+  def get_clean_address(element)
+    element.find_element(css:'a > h2').text.gsub("\n", '')
   end
   
+#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li.is-first-in-list.css-1qp9106 > div > div.css-1n74r2t > div > div.css-9hd67m
+
   def find_link(slug)
     if slug.attribute('class') != "css-5l9b9m"
       slug.find_element(tag_name: 'a').attribute('href')
