@@ -167,11 +167,7 @@ class Scraper
     elements.each_with_index do |i, idx|
       @property_list[i.find_element(css: 'a').attribute('href')] = {info: get_info(i), address: get_clean_address(i), specs: get_specs(i)} if is_listing?(i)
     end
-    if !last
-      @browser.navigate.to "#{@browser.find_elements(class: 'css-xixru3').last.attribute('href')}"
-    else
-      @suburb_complete = true
-    end
+    next_page(last)
   end
 
   def is_listing?(element)
@@ -199,6 +195,14 @@ class Scraper
   def get_specs(element)
     specs = element.find_elements(css: "div > div.css-1gkcyyc > div > div.css-1t41ar7 > div.css-k1qq7e > div > span").map(&:text)
     return specs.each {|i| i.gsub!("\n", " ")}
+  end
+
+  def next_page(last)
+    if !last
+      @browser.navigate.to "#{@browser.find_elements(class: 'css-xixru3').last.attribute('href')}"
+    else
+      @suburb_complete = true
+    end
   end
   
 #skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li.is-first-in-list.css-1qp9106 > div > div.css-1n74r2t > div > div.css-9hd67m
