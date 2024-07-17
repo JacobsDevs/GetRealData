@@ -160,6 +160,42 @@ class Scraper
     end
     require 'pry'; binding.pry
   end
+
+  def pull_suburb_history(browser, suburb_tag)
+    target = "https://www.domain.com.au/sold-listings/#{suburb_tag}/house/?excludepricewithheld=1&ssubs=0"
+    browser.navigate.to target
+    @suburb_complete = false
+    @browser = browser
+    @sold_list = {}
+    @counter = 1
+    time = Time.now
+    until @suburb_complete do
+      process_sold_page
+    end
+    puts time - Time.now
+    require 'pry'; binding.pry
+  end
+
+  def process_sold_page
+    if @counter == 50
+      @suburb_complete = true
+      return
+    end
+    last = @browser.find_elements(css: '#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li').count < 23
+    elements = @browser.find_elements(css: '#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li')
+    elements.each do |i|
+      begin
+        @sold_list[i.find_element(css: 'a').attribute('href')] = {sold_price: get_sold_price(i), info: get_info(i), address: get_clean_address(i), specs: get_specs(i), sold_date: get_sold_date(i), listed_date: get_listed_date(i), link: get_href(i)} if is_listing?(i)
+      rescue NoSuchElementError
+        puts "Error Found"
+        sleep 1
+        retry
+      end
+    end
+    puts "Page #{@counter} complete"
+    @counter += 1
+    next_page(last)
+  end
   
   def process_page
     last = @browser.find_elements(css: '#skip-link-content > div.css-1ned5tb > div.css-1mf5g4s > ul > li').count < 23
@@ -172,6 +208,17 @@ class Scraper
 
   def is_listing?(element)
     element.attribute('class').include?('css-1qp9106')
+  end
+
+  def get_href(element)
+    element.find_element(css: 'a').attribute('href')
+  end
+
+  def get_listed_date(element)
+    string = get_info(element).grep(/Listed/)
+    a = extract_between(string[0], "(", ")")
+    return a.to_date if a
+    return a if !a
   end
 
   def get_info(element)
@@ -188,13 +235,46 @@ class Scraper
     return string
   end
 
+  def get_sold_price(element)
+    valid_string = false
+    until valid_string
+      string = []
+      element.find_elements(css: 'p').each { |i| string << i.text }
+      if !string.join.include?('Loading')
+        valid_string = true
+      else
+        sleep(1)
+      end
+    end
+    if string[0].length > 10
+      return string[0].split('(').last.split(' ').first
+    end
+    return string[0]
+  end
+
   def get_clean_address(element)
     element.find_element(css:'a > h2').text.gsub("\n", '')
   end
 
   def get_specs(element)
-    specs = element.find_elements(css: "div > div.css-1gkcyyc > div > div.css-1t41ar7 > div.css-k1qq7e > div > span").map(&:text)
+    valid = false
+    count = 0
+    until valid
+      specs = element.find_elements(css: "div.css-k1qq7e > div > span").map(&:text)
+      if specs.count > 1
+        valid = true
+      else
+        puts "retrying #{count}"
+        sleep(1)
+      end
+    end
     return specs.each {|i| i.gsub!("\n", " ")}
+  end
+
+  def get_sold_date(element)
+    date = element.find_element(class: "css-1nj9ymt").text
+    reg = Regexp.new('[0-9]{2}+ [A-Za-z]{3}+ [0-9]{4}')
+    real_date = date.match(reg).to_s.to_date
   end
 
   def next_page(last)
@@ -202,6 +282,13 @@ class Scraper
       @browser.navigate.to "#{@browser.find_elements(class: 'css-xixru3').last.attribute('href')}"
     else
       @suburb_complete = true
+    end
+  end
+
+  def extract_between(string, start, ending)
+    if string.is_a?(String)
+      a = string.split(start).last.split(ending).first
+      return a
     end
   end
 end
